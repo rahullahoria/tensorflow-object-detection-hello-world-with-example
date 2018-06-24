@@ -29,41 +29,62 @@
 
 
 ## For hello world:
-Hearby for the hellow world example we will skip some steps, because I have already collected the data with markings. This will make use reach fast over first itration as its hello world for tensorflow. This will help you to get basic understanding of tensorflow. If you are looking for second level details please commit for that and if you have any kind of query please comment for it.
+Hearby for the hello 
+ world example we will skip some steps, because I have already collected the data with markings. This will make use reach fast over first itration as its hello world for tensorflow. This will help you to get basic understanding of tensorflow. If you are looking for second level details please commit for that and if you have any kind of query please comment for it.
 
 ### 1. Setting up the machine:
 
 ```
+# if python3 and pip3 are not installed
+
+sudo apt-get install python3
+sudo apt-get install python3-pip
+
+# if git is not installed
+
+sudo apt-get install git
+
+# installing tensorflow
 pip3 install tensorflow
 
-sudo apt-get install protobuf-compiler python-pil python-lxml python-tk
-sudo pip3 install Cython
-sudo pip3 install jupyter
-sudo pip3 install matplotlib
+# installing other supporting libs, there libs will be user by TF or other supporting steps
+
+sudo apt-get install protobuf-compiler python3-pil python-lxml python-tk
+pip3 install Cython
+pip3 install jupyter
+pip3 install matplotlib
 pip3 install pillow
 pip3 install lxml
 pip3 install pandas
 pip3 install opencv-python
+pip3 install pandas
 
+# cloning the tensorflow, coco and marked data set for our hello world
+
+mkdir tf_demo_project
+cd tf_demo_projects
 git clone https://github.com/tensorflow/models.git
 git clone https://github.com/cocodataset/cocoapi.git
 git clone https://github.com/rahullahoria/tensorflow-object-detection-hello-world-with-example.git
 
+# downloading the faster rcnn model and untaring it
+
 wget http://download.tensorflow.org/models/object_detection/faster_rcnn_inception_v2_coco_2018_01_28.tar.gz
 tar -xvzf faster_rcnn_inception_v2_coco_2018_01_28.tar.gz
 
+
 cd cocoapi/PythonAPI
-make
+make #python3 setup.py build_ext --inplace t  rb
 cp -r pycocotools ../../models/research/
 
 
-\# From tensorflow/models/research/
+# From tensorflow/models/research/
 cd ../../models/research/
 protoc object_detection/protos/*.proto --python_out=.
 python3 setup.py build
-python3 setup.py install
+sudo python3 setup.py install
 
-\# From tensorflow/models/research/
+# From tensorflow/models/research/
 export PYTHONPATH=$PYTHONPATH:`pwd`:`pwd`/slim
 
 Testing the installation
@@ -74,16 +95,36 @@ python3 object_detection/builders/model_builder_test.py
 ### 2. Loading the data:
 Then, generate the TFRecord files by issuing these commands from the /object_detection folder:
 ```
-python generate_tfrecord.py --csv_input=images/train_labels.csv --image_dir=images/train --output_path=train.record
-python generate_tfrecord.py --csv_input=images/test_labels.csv --image_dir=images/test --output_path=test.record
+cd object_detection
+cp -r ../../../tensorflow-object-detection-hello-world-with-example/* ./
+python3 generate_tfrecord.py --csv_input=images/train_labels.csv --image_dir=images/train --output_path=train.record
+python3 generate_tfrecord.py --csv_input=images/test_labels.csv --image_dir=images/test --output_path=test.record
 ```
 
+```
+by https://github.com/tensorflow/models/issues/3705#issuecomment-375563179
+
+you will have this issue please fix it as following
+
+I believe it is the same Python3 incompatibility that has crept up before (see #3443 ). The issue is with models/research/object_detection/utils/learning_schedules.py lines 167-169. Currently it is
+
+rate_index = tf.reduce_max(tf.where(tf.greater_equal(global_step, boundaries),
+                                      range(num_boundaries),
+                                      [0] * num_boundaries))
+Wrap list() around the range() like this:
+
+rate_index = tf.reduce_max(tf.where(tf.greater_equal(global_step, boundaries),
+                                     list(range(num_boundaries)),
+                                      [0] * num_boundaries))
+and you should be good to go. Mine is off and training.
+
+
+```
 
 ### 3. Start The training
 
 Here we go! From the /object_detection directory, issue the following command to begin training:
 ```
-cd object_detection
 cp ../../../faster_rcnn_inception_v2_coco_2018_01_28 ./
 python train.py --logtostderr --train_dir=training --pipeline_config_path=training/faster_rcnn_inception_v2_pets.config
 ```
